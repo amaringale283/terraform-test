@@ -1,0 +1,44 @@
+name: Production Terraform AWS Workflow
+
+on:      
+  push:
+    branches: [ main ]
+
+jobs:
+  tf_code_check:
+    name: Terraform Validation and Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout tf code in runner environment
+      uses: actions/checkout@v3.5.2
+      with:
+        ref: main
+
+    - name: Configure AWS Credentials Action For GitHub Actions
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-2
+
+    - name: Setup Terraform CLI
+      uses: hashicorp/setup-terraform@v2.0.2
+
+    - name: Terraform init and validate
+      run: |
+        terraform init
+        terraform validate
+
+    - name: Terraform plan and apply
+      env:
+        TF_VAR_gcp_unique_id: ${{ secrets.GCP_UNIQUE_ID }}
+      run: |
+        echo `pwd`
+        echo "Terraform Working Directory: terraform/infrastructure"        
+        echo "** Running Terraform Plan**"
+        terraform apply -auto-approve
+        
+        echo "** Running Terraform Apply**"
+
+
